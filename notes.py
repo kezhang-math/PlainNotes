@@ -114,6 +114,29 @@ class NotesListCommand(sublime_plugin.ApplicationCommand):
         sublime.run_command("notes_open", {"file_path": file_path})
 
 
+class NoteInsertLinkCommand(sublime_plugin.ApplicationCommand):
+
+    def run(self):
+        exclude = set([settings().get("archive_dir"), brain_dir()])
+        root = get_root()
+        self.notes_dir = root
+        self.file_list = find_notes(self, root, exclude)
+        rlist = setup_notes_list(self.file_list)
+        window = sublime.active_window()
+        window.show_quick_panel(rlist, self.insert_link)
+
+    def insert_link(self, index):
+        if index == -1:
+            return
+        current_path = os.path.dirname(sublime.active_window().active_view().file_name())
+        link_name = self.file_list[index][1]
+        link_rel_current = os.path.relpath(link_name, current_path)
+        filename = os.path.splitext(os.path.basename(link_name))[0]
+        view = sublime.active_window().active_view()
+        view.run_command("insert_snippet",
+            {"contents": "[{0}]({1})".format(filename, link_rel_current)})
+
+
 class NotesOpenCommand(sublime_plugin.ApplicationCommand):
 
     def run(self, file_path):
